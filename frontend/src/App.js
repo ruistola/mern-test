@@ -1,22 +1,37 @@
-import logo from './logo.svg';
+import { useState, useEffect } from "react";
 import './App.css';
 
 function App() {
+  const [message, setMessage] = useState("Nothing to show");
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const onLoad = async () => {
+      setIsLoading(true);
+
+      try {
+        const res = await fetch("http://localhost:3001/", {
+          mode: "cors",
+          headers: {
+            "Access-Control-Allow-Origin": "*",
+          },
+        });
+        const msg = await res.json();
+        setMessage(JSON.stringify(msg));
+      } catch (e) {
+        console.log("error");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    onLoad();
+  }, []);
+
   return (
     <div className="App">
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
+        {isLoading ? "Loading..." : message}
       </header>
     </div>
   );

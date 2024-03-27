@@ -1,6 +1,7 @@
 version: '3.8'
 
 services:
+
   backend:
     build:
       context: ./backend
@@ -23,8 +24,13 @@ services:
 
   mongo:
     image: mongo
+    environment:
+      - MONGO_INITDB_DATABASE=mernDB
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=root_password
     volumes:
       - data-volume:/data/db
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
     ports:
       - "27017:27017"
     networks:
@@ -50,7 +56,7 @@ services:
 networks:
     app-network:
         driver: bridge
-
+  
 volumes:
     data-volume:
     node_modules:

@@ -1,13 +1,12 @@
 import { useAppContext } from "./AppContext";
 
 export default function Signup() {
-  const { setIsAuthenticated } = useAppContext();
+  const { setAuthToken } = useAppContext();
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event?.preventDefault();
 
     // await for backend to confirm credentials
-    setIsAuthenticated(true);
   };
 
   return (

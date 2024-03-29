@@ -1,13 +1,13 @@
 import { createContext, useContext } from "react";
 
 export interface AppContextType {
-  isAuthenticated: boolean;
-  setIsAuthenticated: React.Dispatch<React.SetStateAction<boolean>>;
+  authToken: string;
+  setAuthToken: React.Dispatch<React.SetStateAction<string>>;
 }
 
 export const AppContext = createContext<AppContextType>({
-  isAuthenticated: false,
-  setIsAuthenticated: useAppContext,
+  authToken: "",
+  setAuthToken: useAppContext,
 });
 
 export function useAppContext() {

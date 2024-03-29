@@ -4,7 +4,7 @@ import { useAppContext } from "./AppContext";
 
 export default function AuthenticatedRoute({ children }: { children: ReactElement; }): ReactElement {
   const { pathname, search } = useLocation();
-  const { isAuthenticated } = useAppContext();
+  const { authToken } = useAppContext();
 
-  return isAuthenticated ? children : <Navigate to={`/login?redirect=${pathname}${search}`} />;
+  return authToken ? children : <Navigate to={`/login?redirect=${pathname}${search}`} />;
 }

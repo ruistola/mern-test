@@ -58,12 +58,12 @@ const Signup = async (req, res, next) => {
 
         const token = createSecretToken(user._id);
 
-        res
+        return res
             .cookie("token", token, { withCredentials: true, httpOnly: false, })
             .status(201)
             .json({ message: "User created succesfully", success: true, token });
 
-        next();
+        // next();
 
     } catch (error) {
         console.log(error);
@@ -74,6 +74,7 @@ const Signup = async (req, res, next) => {
 
 const Login = async (req, res, next) => {
     try {
+        console.log(`Login request received with ${JSON.stringify(req.body)}`);
         const { email, password } = req.body;
         if (!email || !password) return res.status(400).json({ message: "Email and password required"});
 
@@ -85,12 +86,12 @@ const Login = async (req, res, next) => {
 
         const token = createSecretToken(user._id);
 
-        res
+        return res
             .cookie("token", token, { withCredentials: true, httpOnly: false, })
             .status(201)
             .json({ message: "User logged in successfully", success: true, token });
 
-        next();
+        // next();
 
     } catch (error) {
         console.log(error);
@@ -144,9 +145,15 @@ app.listen(port, () => {
     console.log(`Server listening on port ${port}`);
 });
 
+app.use(function(_req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
+
 app.use(cors({
     origin: [`http://127.0.0.1/:${port}`],
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
 }));
 

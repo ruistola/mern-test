@@ -5,11 +5,12 @@ import './App.css';
 import { useNavigate } from "react-router-dom";
 
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authToken, setAuthToken] = useState("");
   const nav = useNavigate();
 
   useEffect(() => {
-    setIsAuthenticated(true);
+    // TODO: Load saved token and authenticate silently if possible
+    setAuthToken("");
   }, []);
 
   const handleSignup = () => {
@@ -21,7 +22,8 @@ export default function App() {
   };
 
   const handleLogout = () => {
-    setIsAuthenticated(false);
+    // TODO: Delete saved token
+    setAuthToken("");
     nav("/");
   };
 
@@ -29,19 +31,19 @@ export default function App() {
     <div className="App">
       <header className="App-header">
         Todo App
+        {authToken != "" ?
+          (<button onClick={handleLogout}>Log out</button>) :
+          (<>
+            <button onClick={handleSignup}>Sign up</button>
+            <button onClick={handleLogin}>Log in</button>
+          </>)
+        }
       </header>
       <div className="App-body">
-        <AppContext.Provider value={{ isAuthenticated, setIsAuthenticated } as AppContextType} >
+        <AppContext.Provider value={{ authToken, setAuthToken } as AppContextType} >
           <Routes />
         </AppContext.Provider>
       </div>
-      {isAuthenticated ?
-        (<button onClick={handleLogout}>Log out</button>) :
-        (<>
-          <button onClick={handleSignup}>Sign up</button>
-          <button onClick={handleLogin}>Log in</button>
-        </>)
-      }
     </div>
   );
 }

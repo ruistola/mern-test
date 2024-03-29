@@ -19,13 +19,9 @@ function querystring(name: string, url = window.location.href) {
 }
 
 export default function UnauthenticatedRoute(props: Props): ReactElement {
-  const { isAuthenticated } = useAppContext();
+  const { authToken } = useAppContext();
   const { children } = props;
   const redirect = querystring("redirect");
 
-  if (isAuthenticated) {
-    return <Navigate to={redirect || "/"} />
-  }
-
-  return cloneElement(children, props);
+  return authToken ? <Navigate to={redirect || "/"} /> : cloneElement(children, props);
 }

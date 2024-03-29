@@ -4,14 +4,14 @@ import Canvas from "./Canvas";
 import TodoList from "./TodoList";
 
 export default function Home() {
-  const { isAuthenticated } = useAppContext();
+  const { authToken } = useAppContext();
 
   useEffect(() => {
     async function onLoad() {
-      if (!isAuthenticated) return;
+      if (!authToken) return;
     }
     onLoad();
-  }, [isAuthenticated]);
+  }, [authToken]);
 
   const renderHome = () => {
     return (
@@ -31,6 +31,6 @@ export default function Home() {
   };
 
   return (
-    isAuthenticated ? renderHome() : renderLandingPage()
+    authToken ? renderHome() : renderLandingPage()
   );
 }

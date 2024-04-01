@@ -145,8 +145,10 @@ const authenticate = async (req, res, next) => {
 
 const Todos = async (req, res) => {
     try {
-        const todos = await Todo.find();
-        console.log(`Fetched user todos from DB, todos: ${JSON.stringify(todos)}`);
+        const user = req.user.user;
+        console.log(`Received request to fetch ${user} todos from DB`);
+        const todos = await Todo.find({ user });
+        console.log(`Fetched user ${user} todos from DB, todos: ${JSON.stringify(todos)}`);
         res.json(todos);
     } catch (error) {
         console.log(error);

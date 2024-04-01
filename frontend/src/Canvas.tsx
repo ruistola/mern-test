@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from "react";
+import Todo from "./Todo";
 
-export default function Canvas() {
+type Props = {
+  todos: Todo[]
+}
+
+export default function Canvas({ todos }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [mousePos, setMousePos] = useState({x: 0, y: 0});
   const [ctx, setCtx] = useState<CanvasRenderingContext2D | null>(null);

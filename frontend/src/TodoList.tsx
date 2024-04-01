@@ -1,11 +1,10 @@
-export default function TodoList() {
+import Todo from "./Todo";
 
-  // TODO: Actually fetch the user's todos for real from the backend DB
-  const todos = [
-    { done: true, content: "First todo" },
-    { done: false, content: "Second todo" },
-  ];
+type Props = {
+  todos: Todo[]
+}
 
+export default function TodoList({ todos }: Props) {
   return (
     <div style={{ border: "1px solid red", width: "400px" }}>
       <div style={{ height: "2em" }}>Todo list title</div>

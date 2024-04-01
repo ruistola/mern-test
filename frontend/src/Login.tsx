@@ -22,15 +22,7 @@ export default function Login() {
         password: fields.password,
       };
 
-      const config = {
-        headers: {
-          "Access-Control-Allow-Origin" : "*",
-          "Content-Type": "application/json",
-          withCredentials: false,
-        },
-      };
-
-      const res = await axios.post("http://127.0.0.1:3001/login", data, config);
+      const res = await axios.post("http://127.0.0.1:3001/login", data);
       
       setAuthToken(res.data.token);
       nav("/");

@@ -20,7 +20,6 @@ export default function TodoList({ todos, onAdd, onDelete, onUpdate }: Props) {
     if (!text) return;
     onAdd(text);
     setText("");
-    console.log("Cleared text");
   };
 
   return (

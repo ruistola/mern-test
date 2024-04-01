@@ -21,6 +21,8 @@ export default function Home() {
     async function onLoad() {
       if (!authToken) return;
 
+      // TODO: Fix timing issues here (unnecessary errors when the default axios headers aren't yet set),
+      // then remove this redundant header
       const config = {
         headers: { Authorization: `Bearer ${authToken}`},
       };
@@ -36,17 +38,8 @@ export default function Home() {
   }, [authToken]);
 
   const addTodo = async (content: string) => {
-
-    const data = {
-      content
-    };
-
-    const config = {
-      headers: { Authorization: `Bearer ${authToken}`},
-    };
-
     try {
-      const res = await axios.post("http://127.0.0.1:3001/v1/todos", data, config);
+      const res = await axios.post("http://127.0.0.1:3001/v1/todos", { content });
       setTodos([...todos, makeTodo(res.data.result, false, content)]);
     } catch (error) {
       console.log(error);
@@ -54,13 +47,8 @@ export default function Home() {
   };
 
   const deleteTodo = async (id: string) => {
-
-    const config = {
-      headers: { Authorization: `Bearer ${authToken}`},
-    };
-
     try {
-      await axios.delete(`http://127.0.0.1:3001/v1/todos/${id}`, config);
+      await axios.delete(`http://127.0.0.1:3001/v1/todos/${id}`);
       setTodos(todos.filter(todo => todo.id !== id));
     } catch (error) {
       console.log(error);
@@ -68,17 +56,8 @@ export default function Home() {
   };
 
   const updateTodo = async (id: string, done: boolean, content: string) => {
-    const data = {
-      done,
-      content,
-    };
-
-    const config = {
-      headers: { Authorization: `Bearer ${authToken}`},
-    };
-
     try {
-      await axios.put(`http://127.0.0.1:3001/v1/todos/${id}`, data, config);
+      await axios.put(`http://127.0.0.1:3001/v1/todos/${id}`, { done, content });
       setTodos(todos.map(todo => (todo.id === id) ? makeTodo(id, done, content) : todo));
     } catch (error) {
       console.log(error);

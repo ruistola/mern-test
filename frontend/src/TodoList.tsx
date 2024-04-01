@@ -17,7 +17,10 @@ export default function TodoList({ todos, onAdd, onDelete, onUpdate }: Props) {
   };
 
   const handleSubmit = () => {
-    if (text) onAdd(text);
+    if (!text) return;
+    onAdd(text);
+    setText("");
+    console.log("Cleared text");
   };
 
   return (
@@ -25,7 +28,7 @@ export default function TodoList({ todos, onAdd, onDelete, onUpdate }: Props) {
       <div style={{ height: "2em" }}>Your TODOs</div>
       <hr />
       <div style={{ height: "2em", display: "flex" }}>
-        <input type="text" onChange={handleTextChange} style={{ flexGrow: 1, marginLeft: "5px", marginRight: "5px" }} />
+        <input type="text" onChange={handleTextChange} style={{ flexGrow: 1, marginLeft: "5px", marginRight: "5px" }} value={text} />
         <input type="button" onClick={handleSubmit} value="Add" style={{ float: "right" }} />
       </div>
       <hr />

@@ -55,7 +55,7 @@ const todoSchema = new mongoose.Schema({
     },
     createdAt: {
         type: Date,
-        default: new Date(),
+        default: Date.now,
     },
 });
 
@@ -155,8 +155,8 @@ const Todos = async (req, res) => {
 const CreateTodo = async (req, res) => {
     try {
         const user = req.user.user;
-        const { clientRequestId, content } = req.body;
-        console.log(`Received create todo request from user ${user} with request id ${clientRequestId} and content '${content}'`);
+        const { content } = req.body;
+        console.log(`Received create todo request from user ${user} with content '${content}'`);
 
         const todo = await Todo.create({ user, content });
 

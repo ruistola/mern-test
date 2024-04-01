@@ -33,6 +33,8 @@ export default function Login() {
       const res = await axios.post("http://127.0.0.1:3001/login", data, config);
       
       setAuthToken(res.data.token);
+      //TODO: Yes it's a flawed approach but for the sake of this exercise, store the token in local storage
+      //to retain it across browser sessions.
       nav("/");
     } catch (error) {
       console.log(error);

@@ -40,14 +40,39 @@ userSchema.pre("save", async function() {
 
 const User = mongoose.model("User", userSchema);
 
-// secret token shenanigans
+const todoSchema = new mongoose.Schema({
+    user: {
+        type: String,
+        required: [true, "User id required"],
+    },
+    clientRequestId: {
+        type: String,
+        required: [true, "Todo client request id required"],
+    },
+    done: {
+        type: Boolean,
+        default: false,
+    },
+    content: {
+        type: String,
+        required: [true, "Todo content required"],
+    },
+    createdAt: {
+        type: Date,
+        default: new Date(),
+    },
+});
+
+const Todo = mongoose.model("Todo", todoSchema);
+
+// Secret token shenanigans
 
 const TOKEN_KEY = "hilipati"; // TODO: Move to .env or smth
 const createSecretToken = (id) => jsonwebtoken.sign({ user: id }, TOKEN_KEY, { expiresIn: 3*24*60*60 });
 
-// signup controller
+// Signup controller
 
-const Signup = async (req, res, next) => {
+const Signup = async (req, res) => {
     try {
         const { email, password, createdAt } = req.body;
 
@@ -61,9 +86,7 @@ const Signup = async (req, res, next) => {
         return res
             .cookie("token", token, { withCredentials: true, httpOnly: false, })
             .status(201)
-            .json({ message: "User created succesfully", success: true, token });
-
-        // next();
+            .json({ message: "User created succesfully", success: true });
 
     } catch (error) {
         console.log(error);
@@ -72,7 +95,7 @@ const Signup = async (req, res, next) => {
 
 // Login controller
 
-const Login = async (req, res, next) => {
+const Login = async (req, res) => {
     try {
         console.log(`Login request received with ${JSON.stringify(req.body)}`);
         const { email, password } = req.body;
@@ -89,9 +112,7 @@ const Login = async (req, res, next) => {
         return res
             .cookie("token", token, { withCredentials: true, httpOnly: false, })
             .status(201)
-            .json({ message: "User logged in successfully", success: true, token });
-
-        // next();
+            .json({ message: "User logged in successfully", success: true, token, user }); // TODO: Clean up sensitive info
 
     } catch (error) {
         console.log(error);
@@ -101,6 +122,7 @@ const Login = async (req, res, next) => {
 // Authenticate middleware
 
 const authenticate = async (req, res, next) => {
+    console.log("Authenticating user");
     try {
         if (!req.headers.authorization) return res.sendStatus(401);
         const [header, token] = req.headers.authorization.split(" ");
@@ -108,7 +130,8 @@ const authenticate = async (req, res, next) => {
 
         jsonwebtoken.verify(token, TOKEN_KEY, (err, user) => {
             if (err) return res.status(403).send(err); // In reality maybe not expose the error details to the caller :|
-            req.user = user; // Just testing: Authenticated routes can expect the request to contain a field "user"
+            console.log(`User authenticated as ${JSON.stringify(user)}`);
+            req.user = user;
             next();
         });
 
@@ -118,15 +141,60 @@ const authenticate = async (req, res, next) => {
     }
 };
 
-// Authenticated route test
+// Todo API
 
-const UserHome = async (req, res, next) => {
+const Todos = async (req, res) => {
     try {
-        if (!req.user) return res.status(403).json({ message: "User is unauthenticated" });
-        res.status(200).json({ status: true, user: req.user }); // The user field is not part of the original request but padded by authenticate()
-        next();
+        const todos = await Todo.find();
+        console.log(`Fetched user todos from DB, todos: ${JSON.stringify(todos)}`);
+        res.json(todos);
     } catch (error) {
         console.log(error);
+        res.json({ message: error.message });
+    }
+};
+
+const CreateTodo = async (req, res) => {
+    try {
+        const user = req.user.user;
+        const { clientRequestId, content } = req.body;
+        console.log(`Received create todo request from user ${user} with request id ${clientRequestId} and content '${content}'`);
+
+        const todoExists = await Todo.findOne({ clientRequestId });
+        if (todoExists) return res.json({ message: "Todo already exists" });
+
+        const todo = await Todo.create({ user, clientRequestId, content });
+
+        console.log(`Added new todo ${JSON.stringify(todo)}`);
+        return res.status(201).json({ message: "Todo created successfully", success: true });
+    } catch (error) {
+        console.log(error);
+        res.json({ message: error.message });
+    }
+};
+
+const UpdateTodo = async (req, res) => {
+    try {
+        const todo = req.params.id;
+        const { done, content } = req.body;
+        if (!todo || !done || !content) return res.status(401).json({ message: "Todo ID, done status and content required" });
+        console.log(`Received update for todo ${todo} with status: '${done}' and content: '${content}'`);
+
+        await Todo.updateOne({ _id: todo },{ $set: { done, content }});
+        return res.status(200).json({ message: "Todo updated successfully", success: true });
+    } catch (error) {
+        console.log(error);
+        res.json({ message: error.message });
+    }
+};
+
+const DeleteTodo = async (req, res) => {
+    try {
+        const deletedTodo = await Todo.deleteOne({ _id: req.params.id });
+        return res.status(200).json(deletedTodo);
+    } catch (error) {
+        console.log(error);
+        res.json({ message: error.message });
     }
 };
 
@@ -137,7 +205,10 @@ unauthRoutes.post("/signup", Signup);
 unauthRoutes.post("/login", Login);
 
 const authRoutes = express.Router();
-authRoutes.post("/home", UserHome);
+authRoutes.get("/v1/todos", Todos);
+authRoutes.post("/v1/todos", CreateTodo);
+authRoutes.put("/v1/todos/:id", UpdateTodo);
+authRoutes.delete("/v1/todos/:id", DeleteTodo);
 
 const port = 3001;
 

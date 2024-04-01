@@ -23,15 +23,16 @@ export default function TodoList({ todos, onTodoAdded, onCheckboxChanged }: Prop
     <div style={{ border: "1px solid red", width: "400px" }}>
       <div style={{ height: "2em" }}>Your TODOs</div>
       <hr />
-      <div style={{ height: "1em" }}>
-        <input type="text" onChange={handleTextChange} />
-        <input type="button" onClick={handleSubmit} value="Add Todo"/>
+      <div style={{ height: "2em", display: "flex" }}>
+        <input type="text" onChange={handleTextChange} style={{ flexGrow: 1, marginLeft: "5px", marginRight: "5px" }} />
+        <input type="button" onClick={handleSubmit} value="Add" style={{ float: "right" }} />
       </div>
       <hr />
       {todos.map( todo => 
         <div style={{ width: "100%", display: "flex", justifyContent: "space-between" }}>
           <input type="checkbox" id={todo.id} onChange={(event) => onCheckboxChanged(todo.id, event.target.checked)} />
-          <span style={{ paddingRight: "5px" }}>{todo.content}</span>
+          <span style={{ padding: "5px" }}>{todo.content}</span>
+          <input type="button" onClick={()=>{}} value="delete" />
         </div>
       )}
     </div>

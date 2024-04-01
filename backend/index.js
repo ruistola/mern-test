@@ -45,10 +45,6 @@ const todoSchema = new mongoose.Schema({
         type: String,
         required: [true, "User id required"],
     },
-    clientRequestId: {
-        type: String,
-        required: [true, "Todo client request id required"],
-    },
     done: {
         type: Boolean,
         default: false,
@@ -162,13 +158,10 @@ const CreateTodo = async (req, res) => {
         const { clientRequestId, content } = req.body;
         console.log(`Received create todo request from user ${user} with request id ${clientRequestId} and content '${content}'`);
 
-        const todoExists = await Todo.findOne({ clientRequestId });
-        if (todoExists) return res.json({ message: "Todo already exists" });
-
-        const todo = await Todo.create({ user, clientRequestId, content });
+        const todo = await Todo.create({ user, content });
 
         console.log(`Added new todo ${JSON.stringify(todo)}`);
-        return res.status(201).json({ message: "Todo created successfully", success: true });
+        return res.status(201).json({ message: "Todo created successfully", success: true, result: todo._id });
     } catch (error) {
         console.log(error);
         res.json({ message: error.message });
@@ -179,11 +172,11 @@ const UpdateTodo = async (req, res) => {
     try {
         const todo = req.params.id;
         const { done, content } = req.body;
-        if (!todo || !done || !content) return res.status(401).json({ message: "Todo ID, done status and content required" });
+        if (!todo || (done === undefined) || !content) return res.status(401).json({ message: "Todo ID, done status and content required" });
         console.log(`Received update for todo ${todo} with status: '${done}' and content: '${content}'`);
 
-        await Todo.updateOne({ _id: todo },{ $set: { done, content }});
-        return res.status(200).json({ message: "Todo updated successfully", success: true });
+        const result = await Todo.updateOne({ _id: todo },{ $set: { done, content }});
+        return res.status(200).json({ message: "Todo updated successfully", success: true, result });
     } catch (error) {
         console.log(error);
         res.json({ message: error.message });
@@ -192,8 +185,11 @@ const UpdateTodo = async (req, res) => {
 
 const DeleteTodo = async (req, res) => {
     try {
-        const deletedTodo = await Todo.deleteOne({ _id: req.params.id });
-        return res.status(200).json(deletedTodo);
+        console.log(`Received delete for todo ${req.params.id}`);
+        const authorizedDelete = await Todo.findOne({ _id: req.params.id, user: req.user.user });
+        if (!authorizedDelete) return res.status(403).json({ message: `User ${req.user.user} is not authorized to delete todo ${req.params.id}`});
+        const result = await Todo.deleteOne({ _id: req.params.id });
+        return res.status(200).json({ message: "Todo deleted successfully", success: true, result });
     } catch (error) {
         console.log(error);
         res.json({ message: error.message });

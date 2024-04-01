@@ -3,43 +3,93 @@ import { useAppContext } from "./AppContext";
 import Canvas from "./Canvas";
 import TodoList from "./TodoList";
 import axios from "axios";
+import Todo from "./Todo";
 
 export default function Home() {
   const { authToken } = useAppContext();
-  const [todos, setTodos] = useState([]);
+  const [todos, setTodos] = useState<Array<Todo>>([]);
 
-  const loadTodos = async () => {
-      const config = {
-        headers: { Authorization: `Bearer ${authToken}`},
-      };
-
-      const res = await axios.get("http://127.0.0.1:3001/v1/todos", config);
-      setTodos(res.data.map((todo: any) => ({ id: todo._id, done: todo.done, content: todo.content })));
+  const makeTodo = (id: string, done: boolean, content: string) : Todo => {
+    return {
+      id,
+      done,
+      content,
+    };
   };
 
   useEffect(() => {
     async function onLoad() {
       if (!authToken) return;
-      await loadTodos();
+
+      const config = {
+        headers: { Authorization: `Bearer ${authToken}`},
+      };
+
+      try {
+        const res = await axios.get("http://127.0.0.1:3001/v1/todos", config);
+        setTodos(res.data.map((todo: any) => makeTodo(todo._id, todo.done, todo.content)));
+      } catch (error) {
+        console.log(error);
+      }
     }
     onLoad();
   }, [authToken]);
 
-  const onCheckboxChanged = (id: string, checked: boolean) => {
-    alert(`Checkbox ticked on ${id}, value is now ${checked}`);
-    // TODO: setTodos && write change to DB
+  const addTodo = async (content: string) => {
+
+    const data = {
+      content
+    };
+
+    const config = {
+      headers: { Authorization: `Bearer ${authToken}`},
+    };
+
+    try {
+      const res = await axios.post("http://127.0.0.1:3001/v1/todos", data, config);
+      setTodos([...todos, makeTodo(res.data.result, false, content)]);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
-  const onTodoAdded = (content: string) => {
-    alert(`New todo added with content: ${content}`);
-    // TODO: setTodos && write change to DB
+  const deleteTodo = async (id: string) => {
+
+    const config = {
+      headers: { Authorization: `Bearer ${authToken}`},
+    };
+
+    try {
+      await axios.delete(`http://127.0.0.1:3001/v1/todos/${id}`, config);
+      setTodos(todos.filter(todo => todo.id !== id));
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const updateTodo = async (id: string, done: boolean, content: string) => {
+    const data = {
+      done,
+      content,
+    };
+
+    const config = {
+      headers: { Authorization: `Bearer ${authToken}`},
+    };
+
+    try {
+      await axios.put(`http://127.0.0.1:3001/v1/todos/${id}`, data, config);
+      setTodos(todos.map(todo => (todo.id === id) ? makeTodo(id, done, content) : todo));
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const renderHome = () => {
     return (
       <div>
         <Canvas todos={todos}/>
-        <TodoList todos={todos} onTodoAdded={onTodoAdded} onCheckboxChanged={onCheckboxChanged} />
+        <TodoList todos={todos} onAdd={addTodo} onDelete={deleteTodo} onUpdate={updateTodo} />
       </div>
     );
   };

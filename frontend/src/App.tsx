@@ -3,15 +3,21 @@ import { AppContext, AppContextType } from "./AppContext";
 import Routes from "./Routes";
 import './App.css';
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 export default function App() {
-  const [authToken, setAuthToken] = useState("");
+  const [authToken, setAuthToken] = useState(localStorage.getItem("token"));
   const nav = useNavigate();
 
   useEffect(() => {
-    // TODO: Load saved token and authenticate silently if possible
-    setAuthToken("");
-  }, []);
+    if (authToken) {
+      axios.defaults.headers.common["Authorization"] = `Bearer ${authToken}`;
+      localStorage.setItem("token", authToken);
+    } else {
+      delete axios.defaults.headers.common["Authorization"];
+      localStorage.removeItem("token");
+    }
+  }, [authToken]);
 
   const handleSignup = () => {
     nav("/signup");
@@ -22,7 +28,6 @@ export default function App() {
   };
 
   const handleLogout = () => {
-    // TODO: Delete saved token
     setAuthToken("");
     nav("/");
   };
@@ -31,7 +36,7 @@ export default function App() {
     <div className="App">
       <header className="App-header">
         Todo App
-        {authToken != "" ?
+        {authToken ?
           (<button onClick={handleLogout}>Log out</button>) :
           (<>
             <button onClick={handleSignup}>Sign up</button>

@@ -3,11 +3,12 @@ import Todo from "./Todo";
 
 type Props = {
   todos: Todo[];
-  onTodoAdded: (content: string) => void;
-  onCheckboxChanged: (id: string, checked: boolean) => void;
+  onAdd: (content: string) => void;
+  onDelete: (id: string) => void;
+  onUpdate: (id: string, done: boolean, content: string) => void;
 }
 
-export default function TodoList({ todos, onTodoAdded, onCheckboxChanged }: Props) {
+export default function TodoList({ todos, onAdd, onDelete, onUpdate }: Props) {
 
   const [text, setText] = useState("");
 
@@ -16,7 +17,7 @@ export default function TodoList({ todos, onTodoAdded, onCheckboxChanged }: Prop
   };
 
   const handleSubmit = () => {
-    onTodoAdded(text);
+    if (text) onAdd(text);
   };
 
   return (
@@ -29,10 +30,10 @@ export default function TodoList({ todos, onTodoAdded, onCheckboxChanged }: Prop
       </div>
       <hr />
       {todos.map( todo => 
-        <div style={{ width: "100%", display: "flex", justifyContent: "space-between" }}>
-          <input type="checkbox" id={todo.id} onChange={(event) => onCheckboxChanged(todo.id, event.target.checked)} />
+        <div key={todo.id} style={{ width: "100%", display: "flex", justifyContent: "space-between", color: todo.done ? "grey" : "black" }}>
+          <input type="checkbox" id={todo.id} checked={todo.done} onChange={(event) => onUpdate(todo.id, event.target.checked, todo.content)} />
           <span style={{ padding: "5px" }}>{todo.content}</span>
-          <input type="button" onClick={()=>{}} value="delete" />
+          <input type="button" onClick={() => onDelete(todo.id)} value="delete" />
         </div>
       )}
     </div>

@@ -25,11 +25,21 @@ export default function Home() {
     onLoad();
   }, [authToken]);
 
+  const onCheckboxChanged = (id: string, checked: boolean) => {
+    alert(`Checkbox ticked on ${id}, value is now ${checked}`);
+    // TODO: setTodos && write change to DB
+  };
+
+  const onTodoAdded = (content: string) => {
+    alert(`New todo added with content: ${content}`);
+    // TODO: setTodos && write change to DB
+  };
+
   const renderHome = () => {
     return (
       <div>
         <Canvas todos={todos}/>
-        <TodoList todos={todos}/>
+        <TodoList todos={todos} onTodoAdded={onTodoAdded} onCheckboxChanged={onCheckboxChanged} />
       </div>
     );
   };

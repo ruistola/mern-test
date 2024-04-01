@@ -1,19 +1,36 @@
+import React, { useState } from "react";
 import Todo from "./Todo";
 
 type Props = {
-  todos: Todo[]
+  todos: Todo[];
+  onTodoAdded: (content: string) => void;
+  onCheckboxChanged: (id: string, checked: boolean) => void;
 }
 
-export default function TodoList({ todos }: Props) {
+export default function TodoList({ todos, onTodoAdded, onCheckboxChanged }: Props) {
+
+  const [text, setText] = useState("");
+
+  const handleTextChange = (event: React.FormEvent<HTMLInputElement>) => {
+    setText(event.currentTarget.value);
+  };
+
+  const handleSubmit = () => {
+    onTodoAdded(text);
+  };
+
   return (
     <div style={{ border: "1px solid red", width: "400px" }}>
-      <div style={{ height: "2em" }}>Todo list title</div>
+      <div style={{ height: "2em" }}>Your TODOs</div>
       <hr />
-      <div style={{ height: "1em" }}>New todo item row</div>
+      <div style={{ height: "1em" }}>
+        <input type="text" onChange={handleTextChange} />
+        <input type="button" onClick={handleSubmit} value="Add Todo"/>
+      </div>
       <hr />
       {todos.map( todo => 
         <div style={{ width: "100%", display: "flex", justifyContent: "space-between" }}>
-          <span style={{ paddingLeft: "5px" }}>{todo.done ? "X" : "O"}</span>
+          <input type="checkbox" id={todo.id} onChange={(event) => onCheckboxChanged(todo.id, event.target.checked)} />
           <span style={{ paddingRight: "5px" }}>{todo.content}</span>
         </div>
       )}

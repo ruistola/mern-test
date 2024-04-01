@@ -31,7 +31,10 @@ export default function Canvas({ todos }: Props) {
     }
   }, []);
 
+  const width = 640;
+  const height = 480;
+
   return (
-    <canvas ref={canvasRef} width="400" height="320" style={{ border: "2px solid black", display: "inline-flex", width:"400", height:"320" }} onDoubleClick={handleMouseDblClick} />
+    <canvas ref={canvasRef} width={width} height={height} style={{ border: "2px solid black", display: "inline-flex", width: `${width}px`, height:`${height}px` }} onDoubleClick={handleMouseDblClick} />
   );
 }

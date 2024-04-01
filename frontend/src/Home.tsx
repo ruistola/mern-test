@@ -66,7 +66,7 @@ export default function Home() {
 
   const renderHome = () => {
     return (
-      <div>
+      <div style={{ display: "inline-flex" }}>
         <Canvas todos={todos}/>
         <TodoList todos={todos} onAdd={addTodo} onDelete={deleteTodo} onUpdate={updateTodo} />
       </div>

@@ -16,6 +16,10 @@ export default function TodoList({ todos, onAdd, onDelete, onUpdate }: Props) {
     setText(event.currentTarget.value);
   };
 
+  const handleTextKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key == "Enter") handleSubmit();
+  };
+
   const handleSubmit = () => {
     if (!text) return;
     onAdd(text);
@@ -27,7 +31,7 @@ export default function TodoList({ todos, onAdd, onDelete, onUpdate }: Props) {
       <div style={{ height: "2em" }}>Your TODOs</div>
       <hr />
       <div style={{ height: "2em", display: "flex" }}>
-        <input type="text" onChange={handleTextChange} style={{ flexGrow: 1, marginLeft: "5px", marginRight: "5px" }} value={text} />
+        <input type="text" onKeyUp={handleTextKeyPress} onChange={handleTextChange} style={{ flexGrow: 1, marginLeft: "5px", marginRight: "5px" }} value={text} autoFocus />
         <input type="button" onClick={handleSubmit} value="Add" style={{ float: "right" }} />
       </div>
       <hr />

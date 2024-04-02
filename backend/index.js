@@ -40,14 +40,35 @@ userSchema.pre("save", async function() {
 
 const User = mongoose.model("User", userSchema);
 
-// secret token shenanigans
+const todoSchema = new mongoose.Schema({
+    user: {
+        type: String,
+        required: [true, "User id required"],
+    },
+    done: {
+        type: Boolean,
+        default: false,
+    },
+    content: {
+        type: String,
+        required: [true, "Todo content required"],
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now,
+    },
+});
+
+const Todo = mongoose.model("Todo", todoSchema);
+
+// Secret token shenanigans
 
 const TOKEN_KEY = "hilipati"; // TODO: Move to .env or smth
 const createSecretToken = (id) => jsonwebtoken.sign({ user: id }, TOKEN_KEY, { expiresIn: 3*24*60*60 });
 
-// signup controller
+// Signup controller
 
-const Signup = async (req, res, next) => {
+const Signup = async (req, res) => {
     try {
         const { email, password, createdAt } = req.body;
 
@@ -58,12 +79,10 @@ const Signup = async (req, res, next) => {
 
         const token = createSecretToken(user._id);
 
-        res
+        return res
             .cookie("token", token, { withCredentials: true, httpOnly: false, })
             .status(201)
-            .json({ message: "User created succesfully", success: true, token });
-
-        next();
+            .json({ message: "User created succesfully", success: true });
 
     } catch (error) {
         console.log(error);
@@ -72,8 +91,9 @@ const Signup = async (req, res, next) => {
 
 // Login controller
 
-const Login = async (req, res, next) => {
+const Login = async (req, res) => {
     try {
+        console.log(`Login request received with ${JSON.stringify(req.body)}`);
         const { email, password } = req.body;
         if (!email || !password) return res.status(400).json({ message: "Email and password required"});
 
@@ -85,12 +105,10 @@ const Login = async (req, res, next) => {
 
         const token = createSecretToken(user._id);
 
-        res
+        return res
             .cookie("token", token, { withCredentials: true, httpOnly: false, })
             .status(201)
-            .json({ message: "User logged in successfully", success: true, token });
-
-        next();
+            .json({ message: "User logged in successfully", success: true, token, user }); // TODO: Clean up sensitive info
 
     } catch (error) {
         console.log(error);
@@ -100,6 +118,7 @@ const Login = async (req, res, next) => {
 // Authenticate middleware
 
 const authenticate = async (req, res, next) => {
+    console.log("Authenticating user");
     try {
         if (!req.headers.authorization) return res.sendStatus(401);
         const [header, token] = req.headers.authorization.split(" ");
@@ -107,7 +126,8 @@ const authenticate = async (req, res, next) => {
 
         jsonwebtoken.verify(token, TOKEN_KEY, (err, user) => {
             if (err) return res.status(403).send(err); // In reality maybe not expose the error details to the caller :|
-            req.user = user; // Just testing: Authenticated routes can expect the request to contain a field "user"
+            console.log(`User authenticated as ${JSON.stringify(user)}`);
+            req.user = user;
             next();
         });
 
@@ -117,15 +137,62 @@ const authenticate = async (req, res, next) => {
     }
 };
 
-// Authenticated route test
+// Todo API
 
-const UserHome = async (req, res, next) => {
+const Todos = async (req, res) => {
     try {
-        if (!req.user) return res.status(403).json({ message: "User is unauthenticated" });
-        res.status(200).json({ status: true, user: req.user }); // The user field is not part of the original request but padded by authenticate()
-        next();
+        const user = req.user.user;
+        console.log(`Received request to fetch ${user} todos from DB`);
+        const todos = await Todo.find({ user });
+        console.log(`Fetched user ${user} todos from DB, todos: ${JSON.stringify(todos)}`);
+        res.json(todos);
     } catch (error) {
         console.log(error);
+        res.json({ message: error.message });
+    }
+};
+
+const CreateTodo = async (req, res) => {
+    try {
+        const user = req.user.user;
+        const { content } = req.body;
+        console.log(`Received create todo request from user ${user} with content '${content}'`);
+
+        const todo = await Todo.create({ user, content });
+
+        console.log(`Added new todo ${JSON.stringify(todo)}`);
+        return res.status(201).json({ message: "Todo created successfully", success: true, result: todo._id });
+    } catch (error) {
+        console.log(error);
+        res.json({ message: error.message });
+    }
+};
+
+const UpdateTodo = async (req, res) => {
+    try {
+        const todo = req.params.id;
+        const { done, content } = req.body;
+        if (!todo || (done === undefined) || !content) return res.status(401).json({ message: "Todo ID, done status and content required" });
+        console.log(`Received update for todo ${todo} with status: '${done}' and content: '${content}'`);
+
+        const result = await Todo.updateOne({ _id: todo },{ $set: { done, content }});
+        return res.status(200).json({ message: "Todo updated successfully", success: true, result });
+    } catch (error) {
+        console.log(error);
+        res.json({ message: error.message });
+    }
+};
+
+const DeleteTodo = async (req, res) => {
+    try {
+        console.log(`Received delete for todo ${req.params.id}`);
+        const authorizedDelete = await Todo.findOne({ _id: req.params.id, user: req.user.user });
+        if (!authorizedDelete) return res.status(403).json({ message: `User ${req.user.user} is not authorized to delete todo ${req.params.id}`});
+        const result = await Todo.deleteOne({ _id: req.params.id });
+        return res.status(200).json({ message: "Todo deleted successfully", success: true, result });
+    } catch (error) {
+        console.log(error);
+        res.json({ message: error.message });
     }
 };
 
@@ -136,7 +203,10 @@ unauthRoutes.post("/signup", Signup);
 unauthRoutes.post("/login", Login);
 
 const authRoutes = express.Router();
-authRoutes.post("/home", UserHome);
+authRoutes.get("/v1/todos", Todos);
+authRoutes.post("/v1/todos", CreateTodo);
+authRoutes.put("/v1/todos/:id", UpdateTodo);
+authRoutes.delete("/v1/todos/:id", DeleteTodo);
 
 const port = 3001;
 
@@ -144,9 +214,15 @@ app.listen(port, () => {
     console.log(`Server listening on port ${port}`);
 });
 
+app.use(function(_req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
+
 app.use(cors({
     origin: [`http://127.0.0.1/:${port}`],
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
 }));
 

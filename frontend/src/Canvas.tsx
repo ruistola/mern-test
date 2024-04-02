@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Todo from "./Todo";
+import renderer  from "./renderer";
 
 type Props = {
   todos: Todo[]
@@ -9,6 +10,21 @@ export default function Canvas({ todos }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [mousePos, setMousePos] = useState({x: 0, y: 0});
   const [ctx, setCtx] = useState<CanvasRenderingContext2D | null>(null);
+  const [glctx, setGlctx] = useState<WebGL2RenderingContext | null>(null);
+
+  const generateTodoPositions = (todos: Todo[]): Float32Array => {
+    const result = new Float32Array(todos.length*3);
+    for (let i=0; i<todos.length; ++i) {
+      result[i*3] = -5 + 10*(i/todos.length);
+      result[i*3+1] = 0;
+      result[i*3+2] = 0;
+    }
+    return result;
+  };
+
+  const getTodos = () => {
+    return generateTodoPositions(todos);
+  };
 
   const handleMouseMove = (e: MouseEvent ) => {
     if (!(e.target instanceof HTMLElement)) return;
@@ -31,10 +47,16 @@ export default function Canvas({ todos }: Props) {
     }
   }, []);
 
-  const width = 640;
-  const height = 480;
+  useLayoutEffect(() => {
+    if (!canvasRef.current) return;
+    setGlctx(canvasRef.current.getContext("webgl2"));
+  }, [canvasRef.current]);
+
+  useLayoutEffect(() => {
+    if (glctx) renderer(glctx, getTodos);
+  }, [glctx, todos]);
 
   return (
-    <canvas ref={canvasRef} width={width} height={height} style={{ border: "2px solid black", display: "inline-flex", width: `${width}px`, height:`${height}px` }} onDoubleClick={handleMouseDblClick} />
+    <canvas ref={canvasRef} width="640px" height="480px" style={{ border: "2px solid black", display: "inline-flex", width: "100%", height: "100%" }} onDoubleClick={handleMouseDblClick} />
   );
 }

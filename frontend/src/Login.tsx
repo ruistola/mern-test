@@ -14,16 +14,8 @@ export default function Login() {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event?.preventDefault();
-
     try {
-      // TODO: Refactor this block out into a parameterized post(url,data) function
-      const data = {
-        email: fields.email,
-        password: fields.password,
-      };
-
-      const res = await axios.post("http://127.0.0.1:3001/login", data);
-      
+      const res = await axios.post("http://127.0.0.1:3001/login", { email: fields.email, password: fields.password });
       setAuthToken(res.data.token);
       nav("/");
     } catch (error) {

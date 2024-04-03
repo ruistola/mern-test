@@ -22,10 +22,6 @@ export default function Canvas({ todos }: Props) {
     return result;
   };
 
-  const getTodos = () => {
-    return generateTodoPositions(todos);
-  };
-
   const handleMouseMove = (e: MouseEvent ) => {
     if (!(e.target instanceof HTMLElement)) return;
     let rect = (e.target as HTMLElement).getBoundingClientRect();
@@ -50,10 +46,10 @@ export default function Canvas({ todos }: Props) {
   useLayoutEffect(() => {
     if (!canvasRef.current) return;
     setGlctx(canvasRef.current.getContext("webgl2"));
-  }, [canvasRef.current]);
+  }, []);
 
   useLayoutEffect(() => {
-    if (glctx) renderer(glctx, getTodos);
+    if (glctx) renderer(glctx, generateTodoPositions(todos));
   }, [glctx, todos]);
 
   return (

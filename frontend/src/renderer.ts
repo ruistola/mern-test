@@ -1,4 +1,4 @@
-const renderer = (glctx: WebGL2RenderingContext, getTodos: () => Float32Array) => {
+const renderer = (glctx: WebGL2RenderingContext, todos: Float32Array) => {
 
   const vertexShaderSource =
     `#version 300 es
@@ -74,29 +74,41 @@ const renderer = (glctx: WebGL2RenderingContext, getTodos: () => Float32Array) =
 
   const createShader = (vsrc: string, fsrc: string) : WebGLProgram | null => {
     const p = glctx.createProgram();
-    const vs = glctx.createShader( glctx.VERTEX_SHADER );
-    const fs = glctx.createShader( glctx.FRAGMENT_SHADER );
+    const vs = glctx.createShader(glctx.VERTEX_SHADER);
+    const fs = glctx.createShader(glctx.FRAGMENT_SHADER);
     if (!p || !vs || !fs) return null;
 
-    glctx.shaderSource( vs, vsrc );
-    glctx.compileShader( vs );
-    if ( !glctx.getShaderParameter( vs, glctx.COMPILE_STATUS ) ) throw "Shader compile errors:\n" + glctx.getShaderInfoLog( vs ) + "\nSource:\n" + vsrc;
+    glctx.shaderSource(vs, vsrc);
+    glctx.compileShader(vs);
 
-    glctx.shaderSource( fs, fsrc );
-    glctx.compileShader( fs );
-    if ( !glctx.getShaderParameter( fs, glctx.COMPILE_STATUS ) ) throw "Shader compile errors:\n" + glctx.getShaderInfoLog( fs ) + "\nSource:\n" + fsrc;
+    if (!glctx.getShaderParameter(vs, glctx.COMPILE_STATUS)) {
+      console.log("Shader compile errors:");
+      console.log(glctx.getShaderInfoLog(vs));
+    }
 
-    glctx.attachShader( p, vs );
-    glctx.attachShader( p , fs );
-    glctx.linkProgram( p );
-    if ( !glctx.getProgramParameter( p, glctx.LINK_STATUS )  ) throw "Shader link errors:\n" + glctx.getProgramInfoLog( p );
-    glctx.useProgram( p );
+    glctx.shaderSource(fs, fsrc);
+    glctx.compileShader(fs);
 
-    glctx.detachShader( p, vs );
-    glctx.detachShader( p, fs );
+    if (!glctx.getShaderParameter(fs, glctx.COMPILE_STATUS)) {
+      console.log("Shader compile errors:");
+      console.log(glctx.getShaderInfoLog(fs));
+    }
+
+    glctx.attachShader(p, vs);
+    glctx.attachShader(p, fs);
+    glctx.linkProgram(p);
+    if (!glctx.getProgramParameter(p, glctx.LINK_STATUS)) {
+      console.log("Shader linker errors:");
+      console.log(glctx.getProgramInfoLog(p));
+    }
+
+    glctx.useProgram(p);
+
+    glctx.detachShader(p, vs);
+    glctx.detachShader(p, fs);
     glctx.deleteShader(vs);
     glctx.deleteShader(fs);
-    glctx.useProgram( null );
+    glctx.useProgram(null);
 
     return p;
   };
@@ -131,7 +143,6 @@ const renderer = (glctx: WebGL2RenderingContext, getTodos: () => Float32Array) =
     glctx.viewport(0, 0, width, height);
     glctx.uniform4f(resLocation, width, height, 0.0, 0.0);
 
-    const todos = getTodos();
     glctx.uniform1i(numItemsLocation, todos.length/3);
     glctx.uniform3fv(itemPositionsLocation, todos);
     glctx.drawElements( glctx.TRIANGLES, 3, glctx.UNSIGNED_SHORT, 0 );

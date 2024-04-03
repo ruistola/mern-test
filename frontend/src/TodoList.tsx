@@ -17,7 +17,7 @@ export default function TodoList({ todos, onAdd, onDelete, onUpdate }: Props) {
   };
 
   const handleTextKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key == "Enter") handleSubmit();
+    if (event.key === "Enter") handleSubmit();
   };
 
   const handleSubmit = () => {

@@ -10,13 +10,13 @@ dotenv.config();
 
 const app = express();
 
+// Set up DB connection and schemas
+
 mongoose.connect(process.env.DB, {})
     .then(() => console.log("Connected to DB"))
     .catch((err) => console.log(err));
 
 mongoose.Promise = global.Promise;
-
-// mongodb user schema
 
 const userSchema = new mongoose.Schema({
     email: {
@@ -63,7 +63,7 @@ const Todo = mongoose.model("Todo", todoSchema);
 
 // Secret token shenanigans
 
-const TOKEN_KEY = "hilipati"; // TODO: Move to .env or smth
+const TOKEN_KEY = process.env.TOKEN_KEY;
 const createSecretToken = (id) => jsonwebtoken.sign({ user: id }, TOKEN_KEY, { expiresIn: 3*24*60*60 });
 
 // Signup controller
@@ -98,24 +98,24 @@ const Login = async (req, res) => {
         if (!email || !password) return res.status(400).json({ message: "Email and password required"});
 
         const user = await User.findOne({email});
-        if (!user) return res.status(403).json({ message: "Bad email or password"});
+        if (!user) return res.status(401).json({ message: "Bad email or password"});
 
         const auth = await bcrypt.compare(password, user.password);
-        if (!auth) return res.status(403).json({ message: "Bad email or password"});
+        if (!auth) return res.status(401).json({ message: "Bad email or password"});
 
         const token = createSecretToken(user._id);
 
         return res
             .cookie("token", token, { withCredentials: true, httpOnly: false, })
             .status(201)
-            .json({ message: "User logged in successfully", success: true, token, user }); // TODO: Clean up sensitive info
+            .json({ message: "User logged in successfully", success: true, token });
 
     } catch (error) {
         console.log(error);
     }
 };
 
-// Authenticate middleware
+// Authentication middleware
 
 const authenticate = async (req, res, next) => {
     console.log("Authenticating user");
@@ -172,7 +172,7 @@ const UpdateTodo = async (req, res) => {
     try {
         const todo = req.params.id;
         const { done, content } = req.body;
-        if (!todo || (done === undefined) || !content) return res.status(401).json({ message: "Todo ID, done status and content required" });
+        if (!todo || (done === undefined) || !content) return res.status(400).json({ message: "Todo ID, done status and content required" });
         console.log(`Received update for todo ${todo} with status: '${done}' and content: '${content}'`);
 
         const result = await Todo.updateOne({ _id: todo },{ $set: { done, content }});
@@ -207,6 +207,8 @@ authRoutes.get("/v1/todos", Todos);
 authRoutes.post("/v1/todos", CreateTodo);
 authRoutes.put("/v1/todos/:id", UpdateTodo);
 authRoutes.delete("/v1/todos/:id", DeleteTodo);
+
+// Set up the server to listen for requests
 
 const port = 3001;
 

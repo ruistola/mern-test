@@ -23,11 +23,8 @@ services:
       - app-network
 
   mongo:
-    image: mongo
-    environment:
-      - MONGO_INITDB_DATABASE=mernDB
-      - MONGO_INITDB_ROOT_USERNAME=root
-      - MONGO_INITDB_ROOT_PASSWORD=root_password
+    image: mongo:latest
+    command: mongod --port 27017 --bind_ip_all
     volumes:
       - data-volume:/data/db
       - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro

@@ -4,7 +4,6 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import jsonwebtoken from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import cookieParser from "cookie-parser";
 
 dotenv.config();
 
@@ -35,7 +34,8 @@ const userSchema = new mongoose.Schema({
 });
 
 userSchema.pre("save", async function() {
-    this.password = await bcrypt.hash(this.password, 12);
+    const saltRounds = 12;
+    this.password = await bcrypt.hash(this.password, saltRounds);
 });
 
 const User = mongoose.model("User", userSchema);
@@ -78,11 +78,7 @@ const Signup = async (req, res) => {
         const user = await User.create({ email, password, createdAt });
 
         const token = createSecretToken(user._id);
-
-        return res
-            .cookie("token", token, { withCredentials: true, httpOnly: false, })
-            .status(201)
-            .json({ message: "User created succesfully", success: true });
+        return res.status(201).json({ message: "User created succesfully", success: true, token });
 
     } catch (error) {
         console.log(error);
@@ -104,11 +100,7 @@ const Login = async (req, res) => {
         if (!auth) return res.status(401).json({ message: "Bad email or password"});
 
         const token = createSecretToken(user._id);
-
-        return res
-            .cookie("token", token, { withCredentials: true, httpOnly: false, })
-            .status(201)
-            .json({ message: "User logged in successfully", success: true, token });
+        return res.status(201).json({ message: "User logged in successfully", success: true, token });
 
     } catch (error) {
         console.log(error);
@@ -125,7 +117,7 @@ const authenticate = async (req, res, next) => {
         if (!header || !token) return res.status(401).send("Authentication credentials are required");
 
         jsonwebtoken.verify(token, TOKEN_KEY, (err, user) => {
-            if (err) return res.status(403).send(err); // In reality maybe not expose the error details to the caller :|
+            if (err) return res.sendStatus(403);
             console.log(`User authenticated as ${JSON.stringify(user)}`);
             req.user = user;
             next();
@@ -228,7 +220,6 @@ app.use(cors({
     credentials: true,
 }));
 
-app.use(cookieParser());
 app.use(express.json());
 app.use(unauthRoutes);
 app.use(authenticate);

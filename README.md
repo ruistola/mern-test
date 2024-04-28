@@ -1,5 +1,3 @@
-Through the darkness of future past, the magician longs to see.
+# Yet another TODO app
 
-One chants out between two worlds:
-
-Fire, walk with me!
+Having only worked on serverless AWS professionally, this is a quick experiment on an old-school serverful stack.
